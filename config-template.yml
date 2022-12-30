@@ -2,7 +2,7 @@
 todoist_api_token: "<your API key>"
 rules:
   - # you can use any filter expression to select which tasks should be
-    # modified
+    # modified. Use "*" asterisk to replace whitespaces in project names.
     # https://todoist.com/help/articles/introduction-to-filters
     query: "project:Alexa*To-do-Liste"
     # So far only 2 transformations are supported: changing the project and
