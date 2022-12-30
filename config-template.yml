@@ -1,0 +1,19 @@
+# replace this with your own API key
+todoist_api_token: "<your API key>"
+rules:
+  - # you can use any filter expression to select which tasks should be
+    # modified
+    # https://todoist.com/help/articles/introduction-to-filters
+    query: "project:Alexa*To-do-Liste"
+    # So far only 2 transformations are supported: changing the project and
+    # changing the due date.
+    transformation:
+      # The name of the project the task should be moved to
+      project: "Inbox"
+      # The new due date of the task, using the english version of the time
+      # expressions:
+      # https://todoist.com/help/articles/due-dates-and-times
+      due: "today"
+  - query: "project:Alexa*Einkaufsliste"
+    transformation:
+      project: "Einkaufsliste"
