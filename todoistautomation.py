@@ -6,6 +6,12 @@ import yaml
 from typing import Dict, List
 from uuid import uuid4
 import requests
+import argparse
+import sys
+import schedule
+import time
+import traceback
+
 
 class Rule:
     """Wrapper around the rules defined in the config file."""
@@ -88,6 +94,37 @@ class TodoistAutomation:
             self.api.update_task(task_id, due_string=rule.transformation_due)
             print(f"Updating due date for task {task_id} to {rule.transformation_due}")
 
-if __name__ == "__main__":
-    ta = TodoistAutomation('config.yaml')
+"""Wrap main function for scheduler. Catch all excpetions and continue."""
+def scheduler_job():
+    print("Running scheduled job...")
+    try:
+        ta = TodoistAutomation('/config/config.yaml')
+        ta.process_rules()
+        print("Scheduler completed.")
+    except Exception:
+      print(traceback.format_exc())
+    sys.stdout.flush()
+
+def main():
+  parser = argparse.ArgumentParser(prog = 'todoistautomation')
+  parser.add_argument('--container',action='store_true')
+  args = parser.parse_args()
+  if args.container:
+    print("Starting scheduler...")
+    sys.stdout.flush()
+    # TODO: set interval via config file
+    schedule.every(5).minutes.do(scheduler_job)
+    
+    print("Running automation on startup...")
+    schedule.run_all()
+    sys.stdout.flush()
+
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
+  else:
+    ta = TodoistAutomation('./config.yaml')
     ta.process_rules()
+
+if __name__ == "__main__":
+    main()
