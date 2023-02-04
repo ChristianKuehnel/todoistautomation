@@ -10,7 +10,7 @@ This is work in progress and not ready for produciton use.
 This tool was developed with the usecase of automatically moving tasks that I created via the Amazon Alexa integration. So I want all items from the *Alexa To-do list* moved to my *Inbox* and set the due date for today. I also want to move all takss from the *Alexa shopping list* moved to my own shopping list.
 
 For this use case Create a `config.yaml` file to configure the automations:
-```
+```yaml
 # set you api token here
 todoist_api_token: <your api token>
 # list of automation rules
@@ -31,6 +31,6 @@ rules:
 
 The easiest way to run this application is to deploy it as a docker container and mount the folder containing your `config.yaml`:
 
-```bash
+```sh
 docker run -v .:/config ghcr.io/christiankuehnel/todoistautomation:release
 ```
