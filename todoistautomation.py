@@ -11,6 +11,7 @@ import sys
 import schedule
 import time
 import traceback
+import logging
 
 
 class Rule:
@@ -18,9 +19,8 @@ class Rule:
 
     def __init__(self, ruleDict :Dict):
         self.query = ruleDict["query"]
-        self.transformation_project = ruleDict["transformation"]["project"]
-        self.transformation_due = ruleDict["transformation"].get("due", None)
-
+        self.move_to = ruleDict.get("move_to", None)       
+        self.update = ruleDict.get("update", None)
 
     @staticmethod
     def build_rules(ruleYaml :Dict) -> List["Rule"]:
@@ -28,9 +28,9 @@ class Rule:
         result = []
         for d in ruleYaml:
             result.append(Rule(d))
+        # TODO: validate that self.update matches the parameters defined in
+        #   https://developer.todoist.com/rest/v2/?python#update-a-task
         return result
-
-
 
 
 class TodoistAutomation:
@@ -85,37 +85,45 @@ class TodoistAutomation:
 
     def transform(self, task_id : int, rule:Rule):
         """Modify a task based on a rule."""
-        transformations = dict()
-        if rule.transformation_project != None:
-            transformation_project_id = self.get_project_id_by_name(rule.transformation_project)
-            self.move_task(task_id, transformation_project_id)
-            print(f"Moved task: {task_id} to project {transformation_project_id}")
-        if rule.transformation_due != None:
-            self.api.update_task(task_id, due_string=rule.transformation_due)
-            print(f"Updating due date for task {task_id} to {rule.transformation_due}")
+
+        if rule.update != None:
+            self.api.update_task(task_id, **rule.update)
+            logging.info(f"Updating task {task_id} to {rule.update}")
+
+        if rule.move_to != None:
+            new_project_id = self.get_project_id_by_name(rule.move_to)
+            self.move_task(task_id, new_project_id)
+            logging.info(f"Moved task: {task_id} to project {new_project_id}")
 
 """Wrap main function for scheduler. Catch all excpetions and continue."""
 def scheduler_job():
-    print("Running scheduled job...")
+    logging.info("Running scheduled job...")
     try:
         ta = TodoistAutomation('/config/config.yaml')
         ta.process_rules()
-        print("Scheduler completed.")
+        logging.info("Scheduler completed.")
     except Exception:
-      print(traceback.format_exc())
+      logging.error(traceback.format_exc())
     sys.stdout.flush()
 
 def main():
   parser = argparse.ArgumentParser(prog = 'todoistautomation')
   parser.add_argument('--container',action='store_true')
   args = parser.parse_args()
+
+  logging.basicConfig(
+      level=logging.INFO,
+      format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
+      datefmt='%Y-%m-%d %H:%M:%S',
+  )
+
   if args.container:
-    print("Starting scheduler...")
+    logging.info("Starting scheduler...")
     sys.stdout.flush()
     # TODO: set interval via config file
     schedule.every(5).minutes.do(scheduler_job)
     
-    print("Running automation on startup...")
+    logging.info("Running automation on startup...")
     schedule.run_all()
     sys.stdout.flush()
 
